@@ -149,7 +149,7 @@ const Books = () => {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all_categories">All Categories</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
@@ -166,7 +166,7 @@ const Books = () => {
                   <SelectValue placeholder="Availability" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Books</SelectItem>
+                  <SelectItem value="all_books">All Books</SelectItem>
                   <SelectItem value="available">Available</SelectItem>
                   <SelectItem value="unavailable">Not Available</SelectItem>
                 </SelectContent>
