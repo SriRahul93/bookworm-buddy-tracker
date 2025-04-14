@@ -1,48 +1,9 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { User, Book, IssuedBook } from "@/types/supabase";
 
-// Types
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'student' | 'admin';
-  studentId?: string;
-}
-
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  isbn: string;
-  category: string;
-  available: number;
-  total: number;
-  coverImage: string;
-  publishedYear: number;
-  description: string;
-}
-
-export interface IssuedBook {
-  id: string;
-  bookId: string;
-  userId: string;
-  issueDate: string;
-  dueDate: string;
-  returnDate?: string;
-  fine: number;
-  bookDetails: Book;
-}
-
-interface Profile {
-  id: string;
-  name: string;
-  role: 'admin' | 'student';
-  student_id?: string;
-}
-
+// Context type
 interface LibraryContextType {
   user: User | null;
   books: Book[];

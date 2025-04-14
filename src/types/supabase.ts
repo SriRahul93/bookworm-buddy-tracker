@@ -35,3 +35,36 @@ export interface IssuedBookRecord {
   updated_at: string;
   book?: BookRecord;
 }
+
+// Additional types needed for the application that don't modify the generated types
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'admin';
+  studentId?: string;
+}
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  isbn: string;
+  category: string;
+  available: number;
+  total: number;
+  coverImage: string;
+  publishedYear: number;
+  description: string;
+}
+
+export interface IssuedBook {
+  id: string;
+  bookId: string;
+  userId: string;
+  issueDate: string;
+  dueDate: string;
+  returnDate?: string;
+  fine: number;
+  bookDetails: Book;
+}
