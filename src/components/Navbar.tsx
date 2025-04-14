@@ -16,9 +16,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <BookOpen className="h-8 w-8 text-library-purple" />
-              <span className="ml-2 text-xl font-bold gradient-text">LibTrack</span>
+            <Link to="/" className="flex-shrink-0 flex items-center group">
+              <BookOpen className="h-8 w-8 text-library-purple transition-transform duration-300 group-hover:scale-110" />
+              <span className="ml-2 text-xl font-bold gradient-text transition-transform duration-300 group-hover:scale-105">LibTrack</span>
             </Link>
           </div>
           

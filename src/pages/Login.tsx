@@ -138,7 +138,13 @@ const Login = () => {
                         <FormControl>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <Input className="pl-10" placeholder="John Doe" {...field} />
+                            <Input 
+                              className="pl-10" 
+                              placeholder="John Doe" 
+                              {...field} 
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
