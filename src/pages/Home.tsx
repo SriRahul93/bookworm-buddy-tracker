@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { BookOpenText, CalendarCheck2, BookCheck, CircleDollarSign, BookSearch, LibraryBig, BellRing, BookMarked } from "lucide-react";
+import { BookOpenText, CalendarCheck2, BookCheck, CircleDollarSign, BookUser, LibraryBig, BellRing, BookMarked } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -50,7 +50,7 @@ const Home = () => {
     {
       title: "Book Search",
       description: "Find and borrow books from the library catalog",
-      icon: BookSearch,
+      icon: BookUser,
       color: "bg-amber-100 text-amber-600"
     },
   ];
