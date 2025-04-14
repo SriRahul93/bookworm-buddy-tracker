@@ -157,8 +157,8 @@ const sampleIssuedBooks: IssuedBook[] = [
 
 export const LibraryProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [books, setBooks] = useState<Book[]>(sampleBooks);
-  const [issuedBooks, setIssuedBooks] = useState<IssuedBook[]>(sampleIssuedBooks);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [issuedBooks, setIssuedBooks] = useState<IssuedBook[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
   // Set up auth state listener
@@ -182,7 +182,7 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
                 id: session.user.id,
                 name: profile.name,
                 email: session.user.email || '',
-                role: profile.role,
+                role: profile.role as 'student' | 'admin',
                 studentId: profile.student_id
               };
               setUser(userData);

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { BookOpen, ArrowRight, ArrowLeft, Mail, Lock, User, IdCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -27,7 +27,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Login form schema
 const loginSchema = z.object({
@@ -50,7 +49,6 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const Login = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const { user, login, register, isLoading } = useLibrary();
-  const navigate = useNavigate();
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -107,9 +105,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <div className="flex justify-center">
-            <BookOpen className="h-12 w-12 text-library-purple" />
+            <BookOpen className="h-12 w-12 text-primary" />
           </div>
-          <h2 className="mt-3 text-3xl font-bold gradient-text">
+          <h2 className="mt-3 text-3xl font-bold text-primary">
             Welcome to LibTrack
           </h2>
           <p className="mt-2 text-gray-600">
@@ -119,7 +117,7 @@ const Login = () => {
           </p>
         </div>
 
-        <Card className="shadow-lg animate-fade-in border-none">
+        <Card className="shadow-lg border-none">
           {isRegistering ? (
             // Registration Form
             <Form {...registerForm}>
@@ -231,7 +229,7 @@ const Login = () => {
                 <CardFooter className="flex flex-col space-y-3">
                   <Button
                     type="submit"
-                    className="w-full gradient-bg hover:opacity-90"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={isLoading}
                   >
                     {isLoading ? "Creating Account..." : "Sign Up"}
@@ -285,7 +283,7 @@ const Login = () => {
                           <FormLabel>Password</FormLabel>
                           <a
                             href="#"
-                            className="text-xs text-library-purple hover:underline"
+                            className="text-xs text-primary hover:underline"
                           >
                             Forgot password?
                           </a>
@@ -304,7 +302,7 @@ const Login = () => {
                 <CardFooter className="flex flex-col space-y-3">
                   <Button
                     type="submit"
-                    className="w-full gradient-bg hover:opacity-90"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={isLoading}
                   >
                     {isLoading ? "Signing in..." : "Sign In"}
