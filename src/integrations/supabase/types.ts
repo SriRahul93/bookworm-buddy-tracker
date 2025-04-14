@@ -9,7 +9,122 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      books: {
+        Row: {
+          author: string
+          available: number
+          category: string
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          id: string
+          isbn: string
+          published_year: number | null
+          title: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          available?: number
+          category: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          isbn: string
+          published_year?: number | null
+          title: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          available?: number
+          category?: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          isbn?: string
+          published_year?: number | null
+          title?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      issued_books: {
+        Row: {
+          book_id: string
+          created_at: string
+          due_date: string
+          fine: number | null
+          id: string
+          issue_date: string
+          return_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          due_date: string
+          fine?: number | null
+          id?: string
+          issue_date?: string
+          return_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          due_date?: string
+          fine?: number | null
+          id?: string
+          issue_date?: string
+          return_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issued_books_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          role: string
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          name: string
+          role: string
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

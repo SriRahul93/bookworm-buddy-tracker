@@ -1,6 +1,7 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 // Types
 export interface User {
@@ -35,15 +36,24 @@ export interface IssuedBook {
   bookDetails: Book;
 }
 
+interface Profile {
+  id: string;
+  name: string;
+  role: 'admin' | 'student';
+  student_id?: string;
+}
+
 interface LibraryContextType {
   user: User | null;
   books: Book[];
   issuedBooks: IssuedBook[];
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  register: (email: string, password: string, name: string, role: 'student' | 'admin', studentId?: string) => Promise<void>;
+  logout: () => Promise<void>;
   borrowBook: (bookId: string) => Promise<void>;
   returnBook: (issueId: string) => Promise<void>;
   searchBooks: (query: string) => Book[];
+  isLoading: boolean;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -149,51 +159,206 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [books, setBooks] = useState<Book[]>(sampleBooks);
   const [issuedBooks, setIssuedBooks] = useState<IssuedBook[]>(sampleIssuedBooks);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  // Load user from localStorage
+  // Set up auth state listener
   useEffect(() => {
-    const storedUser = localStorage.getItem('libtrack_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    // First set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setIsLoading(true);
+        if (session?.user) {
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (error) throw error;
+
+            if (profile) {
+              const userData: User = {
+                id: session.user.id,
+                name: profile.name,
+                email: session.user.email || '',
+                role: profile.role,
+                studentId: profile.student_id
+              };
+              setUser(userData);
+            }
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            toast.error('Error loading user profile');
+          }
+        } else {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+    
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        // We'll use the onAuthStateChange handler to set the user
+      } else {
+        setIsLoading(false);
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
+  // Load books from Supabase
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('books')
+          .select('*');
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Transform Supabase data to match our Book interface
+          const formattedBooks: Book[] = data.map(book => ({
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            isbn: book.isbn,
+            category: book.category,
+            available: book.available,
+            total: book.total,
+            coverImage: book.cover_image || 'https://images.unsplash.com/photo-1532012197267-da84d127e765',
+            publishedYear: book.published_year || 2000,
+            description: book.description || 'No description available'
+          }));
+          
+          setBooks(formattedBooks);
+        }
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    };
+    
+    if (user) {
+      fetchBooks();
+    }
+  }, [user]);
+  
+  // Load issued books from Supabase
+  useEffect(() => {
+    const fetchIssuedBooks = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('issued_books')
+          .select(`
+            *,
+            book:book_id (*)
+          `)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Transform Supabase data to match our IssuedBook interface
+          const formattedIssuedBooks: IssuedBook[] = data.map(issue => ({
+            id: issue.id,
+            bookId: issue.book_id,
+            userId: issue.user_id,
+            issueDate: issue.issue_date,
+            dueDate: issue.due_date,
+            returnDate: issue.return_date || undefined,
+            fine: Number(issue.fine),
+            bookDetails: {
+              id: issue.book.id,
+              title: issue.book.title,
+              author: issue.book.author,
+              isbn: issue.book.isbn,
+              category: issue.book.category,
+              available: issue.book.available,
+              total: issue.book.total,
+              coverImage: issue.book.cover_image || 'https://images.unsplash.com/photo-1532012197267-da84d127e765',
+              publishedYear: issue.book.published_year || 2000,
+              description: issue.book.description || 'No description available'
+            }
+          }));
+          
+          setIssuedBooks(formattedIssuedBooks);
+        }
+      } catch (error) {
+        console.error('Error fetching issued books:', error);
+      }
+    };
+    
+    if (user) {
+      fetchIssuedBooks();
+    }
+  }, [user]);
+  
   const login = async (email: string, password: string) => {
-    // Simulate API call
-    if (email === "student@example.com" && password === "password") {
-      const studentUser: User = {
-        id: "student1",
-        name: "John Doe",
-        email: "student@example.com",
-        role: "student",
-        studentId: "S12345",
-      };
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      setUser(studentUser);
-      localStorage.setItem('libtrack_user', JSON.stringify(studentUser));
+      if (error) throw error;
+      
       toast.success("Login successful!");
-      return;
-    } else if (email === "admin@example.com" && password === "password") {
-      const adminUser: User = {
-        id: "admin1",
-        name: "Admin User",
-        email: "admin@example.com",
-        role: "admin",
-      };
-      
-      setUser(adminUser);
-      localStorage.setItem('libtrack_user', JSON.stringify(adminUser));
-      toast.success("Admin login successful!");
-      return;
-    } else {
-      throw new Error("Invalid email or password");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login");
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('libtrack_user');
-    toast.success("Logged out successfully");
+  const register = async (email: string, password: string, name: string, role: 'student' | 'admin', studentId?: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+            student_id: studentId
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Registration successful! Please check your email to confirm your account.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to register");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setUser(null);
+      toast.success("Logged out successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to logout");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const borrowBook = async (bookId: string) => {
@@ -202,71 +367,119 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    // Find the book
-    const book = books.find((b) => b.id === bookId);
-    if (!book) {
-      toast.error("Book not found");
-      return;
-    }
-    
-    // Check if book is available
-    if (book.available <= 0) {
-      toast.error("This book is currently unavailable");
-      return;
-    }
-    
-    // Update book availability
-    const updatedBooks = books.map((b) => {
-      if (b.id === bookId) {
-        return { ...b, available: b.available - 1 };
+    try {
+      // Find the book
+      const book = books.find((b) => b.id === bookId);
+      if (!book) {
+        toast.error("Book not found");
+        return;
       }
-      return b;
-    });
-    
-    // Create a new issue record
-    const issueDate = new Date().toISOString().split('T')[0];
-    // Due date is 30 days from now
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 30);
-    
-    const newIssue: IssuedBook = {
-      id: `issue_${Date.now()}`,
-      bookId,
-      userId: user.id,
-      issueDate,
-      dueDate: dueDate.toISOString().split('T')[0],
-      fine: 0,
-      bookDetails: book
-    };
-    
-    setBooks(updatedBooks);
-    setIssuedBooks([...issuedBooks, newIssue]);
-    
-    toast.success(`You have borrowed "${book.title}". Return by ${dueDate.toLocaleDateString()}.`);
+      
+      // Check if book is available
+      if (book.available <= 0) {
+        toast.error("This book is currently unavailable");
+        return;
+      }
+      
+      // Due date is 30 days from now
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+      
+      // Insert into issued_books
+      const { data, error } = await supabase
+        .from('issued_books')
+        .insert({
+          book_id: bookId,
+          user_id: user.id,
+          due_date: dueDate.toISOString().split('T')[0]
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      // Update book availability
+      const { error: updateError } = await supabase
+        .from('books')
+        .update({ available: book.available - 1 })
+        .eq('id', bookId);
+      
+      if (updateError) throw updateError;
+      
+      // Update local state
+      const updatedBooks = books.map((b) => {
+        if (b.id === bookId) {
+          return { ...b, available: b.available - 1 };
+        }
+        return b;
+      });
+      
+      setBooks(updatedBooks);
+      
+      if (data && data.length > 0) {
+        const newIssue: IssuedBook = {
+          id: data[0].id,
+          bookId,
+          userId: user.id,
+          issueDate: data[0].issue_date,
+          dueDate: data[0].due_date,
+          fine: 0,
+          bookDetails: book
+        };
+        
+        setIssuedBooks([...issuedBooks, newIssue]);
+      }
+      
+      toast.success(`You have borrowed "${book.title}". Return by ${dueDate.toLocaleDateString()}.`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to borrow book");
+    }
   };
   
   const returnBook = async (issueId: string) => {
-    const issue = issuedBooks.find((i) => i.id === issueId);
-    if (!issue) {
-      toast.error("Issue record not found");
-      return;
-    }
-    
-    // Update book availability
-    const updatedBooks = books.map((b) => {
-      if (b.id === issue.bookId) {
-        return { ...b, available: b.available + 1 };
+    try {
+      const issue = issuedBooks.find((i) => i.id === issueId);
+      if (!issue) {
+        toast.error("Issue record not found");
+        return;
       }
-      return b;
-    });
-    
-    // Update issue record with return date
-    const updatedIssues = issuedBooks.filter((i) => i.id !== issueId);
-    
-    setBooks(updatedBooks);
-    setIssuedBooks(updatedIssues);
-    
-    toast.success(`You have returned "${issue.bookDetails.title}".`);
+      
+      // Update issued_book with return date
+      const { error } = await supabase
+        .from('issued_books')
+        .update({
+          return_date: new Date().toISOString().split('T')[0]
+        })
+        .eq('id', issueId);
+      
+      if (error) throw error;
+      
+      // Update book availability
+      const { error: updateError } = await supabase
+        .from('books')
+        .update({
+          available: issue.bookDetails.available + 1
+        })
+        .eq('id', issue.bookId);
+      
+      if (updateError) throw updateError;
+      
+      // Update local state
+      const updatedBooks = books.map((b) => {
+        if (b.id === issue.bookId) {
+          return { ...b, available: b.available + 1 };
+        }
+        return b;
+      });
+      
+      const updatedIssues = issuedBooks.filter((i) => i.id !== issueId);
+      
+      setBooks(updatedBooks);
+      setIssuedBooks(updatedIssues);
+      
+      toast.success(`You have returned "${issue.bookDetails.title}".`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to return book");
+    }
   };
   
   const searchBooks = (query: string): Book[] => {
@@ -285,10 +498,12 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
     books,
     issuedBooks,
     login,
+    register,
     logout,
     borrowBook,
     returnBook,
-    searchBooks
+    searchBooks,
+    isLoading
   };
   
   return (
