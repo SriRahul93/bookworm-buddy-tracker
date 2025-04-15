@@ -3,10 +3,9 @@ import { useState, useEffect } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { BookOpen, Search, BookCheck, Filter, X } from "lucide-react";
+import { BookOpen, Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
@@ -24,8 +23,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import BookCard from "@/components/BookCard";
+import { mockBooks } from "@/utils/mockBooks";
 
 // Animation variants for the book cards
 const containerVariants = {
@@ -38,17 +37,13 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
-
 const Books = () => {
-  const { books, borrowBook, issuedBooks, user } = useLibrary();
+  const { user } = useLibrary();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [availabilityFilter, setAvailabilityFilter] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [books, setBooks] = useState(mockBooks);
   
   // Get unique categories from books
   const categories = [...new Set(books.map(book => book.category))];
@@ -72,32 +67,17 @@ const Books = () => {
     
     // Category filter
     const matchesCategory = 
-      !categoryFilter || 
+      !categoryFilter || categoryFilter === "all_categories" ||
       book.category === categoryFilter;
     
     // Availability filter
     const matchesAvailability = 
-      !availabilityFilter || 
+      !availabilityFilter || availabilityFilter === "all_books" ||
       (availabilityFilter === 'available' && book.available > 0) || 
       (availabilityFilter === 'unavailable' && book.available === 0);
     
     return matchesSearch && matchesCategory && matchesAvailability;
   });
-  
-  const handleBorrow = (bookId: string) => {
-    if (!user) {
-      toast.error("Please login to borrow books");
-      return;
-    }
-    
-    borrowBook(bookId);
-  };
-  
-  // Check if a book is borrowed by the current user
-  const isBookBorrowed = (bookId: string) => {
-    if (!user) return false;
-    return issuedBooks.some(issue => issue.bookId === bookId);
-  };
   
   const clearFilters = () => {
     setSearchQuery("");
@@ -240,67 +220,9 @@ const Books = () => {
               animate="show"
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-              {filteredBooks.map((book) => {
-                const borrowed = isBookBorrowed(book.id);
-                
-                return (
-                  <motion.div
-                    key={book.id}
-                    variants={itemVariants}
-                    className="flex flex-col bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow hover:border-gray-300"
-                  >
-                    <div className="relative h-64 overflow-hidden">
-                      <img
-                        src={book.coverImage}
-                        alt={book.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge className={cn(
-                          book.available > 0 
-                            ? "bg-green-100 text-green-800 hover:bg-green-100" 
-                            : "bg-red-100 text-red-800 hover:bg-red-100"
-                        )}>
-                          {book.available > 0 ? "Available" : "Unavailable"}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-lg truncate" title={book.title}>
-                        {book.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 truncate" title={book.author}>
-                        {book.author}
-                      </p>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs text-gray-500">
-                          {book.available} of {book.total} available
-                        </span>
-                        <Badge variant="outline">{book.category}</Badge>
-                      </div>
-                      <div className="mt-4">
-                        <Button
-                          className="w-full"
-                          disabled={book.available === 0 || borrowed}
-                          variant={borrowed ? "outline" : "default"}
-                          onClick={() => handleBorrow(book.id)}
-                        >
-                          {borrowed ? (
-                            <div className="flex items-center">
-                              <BookCheck className="h-4 w-4 mr-2" />
-                              Borrowed
-                            </div>
-                          ) : book.available > 0 ? (
-                            "Borrow Book"
-                          ) : (
-                            "Unavailable"
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {filteredBooks.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
             </motion.div>
           )}
         </div>

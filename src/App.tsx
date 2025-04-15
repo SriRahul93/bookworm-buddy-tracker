@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Books from "./pages/Books";
 import Login from "./pages/Login";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import { LibraryProvider, useLibrary } from "./contexts/LibraryContext";
 
 const queryClient = new QueryClient();
@@ -64,10 +66,106 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
+      <Route 
+        path="/dashboard/profile" 
+        element={
+          <ProtectedRoute requiredRole="student">
+            <ProfilePage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard/settings" 
+        element={
+          <ProtectedRoute requiredRole="student">
+            <SettingsPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard/books" 
+        element={
+          <ProtectedRoute requiredRole="student">
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard/fines" 
+        element={
+          <ProtectedRoute requiredRole="student">
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard/history" 
+        element={
+          <ProtectedRoute requiredRole="student">
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
       
       {/* Protected admin routes */}
       <Route 
         path="/admin" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/profile" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <ProfilePage isAdmin={true} />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/settings" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <SettingsPage isAdmin={true} />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/books" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/add-book" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/students" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/transactions" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/fines" 
         element={
           <ProtectedRoute requiredRole="admin">
             <AdminDashboard />
