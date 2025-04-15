@@ -1,23 +1,57 @@
-
 import { Book } from "@/types/book";
 
-// Mock cover images (use random image each time)
-const getRandomCover = () => {
-  // Create an array of stock book cover images
-  const covers = [
-    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=2787&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=2730&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=2787&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1543381945-f9527a1ec2e5?q=80&w=2729&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1495640388908-44d0e8e8c3a8?q=80&w=2787&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=2788&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=2773&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=2870&auto=format&fit=crop",
-    "https://plus.unsplash.com/premium_photo-1677187301933-b3cb2eea0032?q=80&w=2787&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=2870&auto=format&fit=crop",
-  ];
+// Book cover image map that matches titles to relevant cover images
+const bookCovers: Record<string, string> = {
+  // Programming books
+  "Design Patterns": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?q=80&w=2070&auto=format&fit=crop",
+  "Clean Code": "https://images.unsplash.com/photo-1550399105-c4db5fb85c18?q=80&w=2071&auto=format&fit=crop",
+  "The Pragmatic Programmer": "https://images.unsplash.com/photo-1517148815978-75f6acaaf32c?q=80&w=2070&auto=format&fit=crop",
+  "Introduction to Algorithms": "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2070&auto=format&fit=crop",
+  "Learning React": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop",
+  "You Don't Know JS": "https://images.unsplash.com/photo-1613490900233-141c5560d75d?q=80&w=2071&auto=format&fit=crop",
+  "JavaScript: The Good Parts": "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?q=80&w=2070&auto=format&fit=crop",
+  "Refactoring": "https://images.unsplash.com/photo-1623479322729-28b25c16b011?q=80&w=2070&auto=format&fit=crop",
   
-  return covers[Math.floor(Math.random() * covers.length)];
+  // Fiction
+  "To Kill a Mockingbird": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1974&auto=format&fit=crop",
+  "The Silent Echo": "https://images.unsplash.com/photo-1474932430478-367dbb6a45dip=80&w=2070&auto=format&fit=crop",
+  "Whispers in the Dark": "https://images.unsplash.com/photo-1610882648335-eda2a5454180?q=80&w=1974&auto=format&fit=crop",
+  "The Lost City": "https://images.unsplash.com/photo-1518998053901-5348d3961a04?q=80&w=1974&auto=format&fit=crop",
+  "Beyond the Horizon": "https://images.unsplash.com/photo-1528722828814-77b9b83aafb2?q=80&w=2070&auto=format&fit=crop",
+  "Echoes of Time": "https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=2070&auto=format&fit=crop",
+  "The Quantum Paradox": "https://images.unsplash.com/photo-1614728263952-84ea256f9679?q=80&w=2069&auto=format&fit=crop",
+  "Secrets of the Deep": "https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=1932&auto=format&fit=crop",
+  "The Last Guardian": "https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=2076&auto=format&fit=crop",
+  "Shadows of the Past": "https://images.unsplash.com/photo-1516054575922-f0b8eeadec1a?q=80&w=2070&auto=format&fit=crop",
+  
+  // Science & Philosophy
+  "The Forgotten Key": "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=2070&auto=format&fit=crop",
+  "The Algorithm of Life": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop",
+  "Beneath the Surface": "https://images.unsplash.com/photo-1576872381149-7847515ce5d8?q=80&w=2076&auto=format&fit=crop",
+  "The Hidden Truth": "https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?q=80&w=2074&auto=format&fit=crop",
+  "Artificial Intelligence: A Modern Approach": "https://images.unsplash.com/photo-1677442135136-760c813029fb?q=80&w=2070&auto=format&fit=crop"
+};
+
+// Fallback cover images for books without specific covers
+const fallbackCovers = [
+  "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=2070&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=2070&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=2070&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1543381945-f9527a1ec2e5?q=80&w=2070&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1495640388908-44d0e8e8c3a8?q=80&w=2070&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=2070&auto=format&fit=crop"
+];
+
+// Get a cover image for a title, or use a themed fallback
+const getCoverImage = (title: string, category: string): string => {
+  // If we have a specific cover for this title, use it
+  if (bookCovers[title]) {
+    return bookCovers[title];
+  }
+  
+  // Otherwise, choose a fallback based on the hash of the title
+  const titleHash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return fallbackCovers[titleHash % fallbackCovers.length];
 };
 
 // Categories
@@ -93,7 +127,7 @@ const bookData = [
   { title: "Java: The Complete Reference", author: "Herbert Schildt" },
 ];
 
-// Generate 50 mock books
+// Generate mock books
 export const generateMockBooks = (count = 50): Book[] => {
   const books: Book[] = [];
   
@@ -112,7 +146,7 @@ export const generateMockBooks = (count = 50): Book[] => {
       title,
       author,
       description: `A fascinating book about ${title.toLowerCase()}.`,
-      coverImage: getRandomCover(),
+      coverImage: getCoverImage(title, category),
       category,
       available: availableCopies,
       total: totalCopies,
