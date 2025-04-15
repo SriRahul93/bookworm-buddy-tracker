@@ -73,7 +73,7 @@ const BookCard = ({ book }: BookCardProps) => {
           <div className="mt-4">
             <Button
               className="w-full"
-              disabled={book.available === 0 || borrowed}
+              disabled={book.available === 0 || borrowed || !user}
               variant={borrowed ? "outline" : "default"}
               onClick={handleBorrowClick}
             >

@@ -14,6 +14,6 @@ export interface Book {
   language?: string;
   addedDate?: string;
   pages?: number;
-  department?: string; // Added for department-specific books
-  course?: string; // Added for course-specific books
+  department?: string; // For department-specific books
+  course?: string; // For course-specific books
 }

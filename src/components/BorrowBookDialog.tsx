@@ -49,8 +49,8 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      department: "",
-      course: "",
+      department: book.department || "",
+      course: book.course || "",
       rollNo: "",
     },
   });
@@ -64,11 +64,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
     setIsSubmitting(true);
     
     try {
-      // In a real app, you would validate these values against a database
-      // For demo, we'll just simulate a delay and success
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Borrow the book
+      // Call the borrowBook function from LibraryContext
       await borrowBook(book.id);
       
       // Show confirmation
