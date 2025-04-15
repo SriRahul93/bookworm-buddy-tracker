@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { User, Mail, Lock, IdCard, ArrowLeft } from "lucide-react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,7 +23,7 @@ const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  role: z.enum(["student", "admin"]),
+  role: z.enum(["student", "admin"]).default("student"),
   studentId: z.string().optional(),
 });
 
@@ -35,6 +35,7 @@ interface RegisterFormProps {
 
 const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
   const { register, isLoading } = useLibrary();
+  const [registerRole, setRegisterRole] = useState<"student" | "admin">("student");
   
   // Register form
   const form = useForm<RegisterFormValues>({
@@ -47,6 +48,12 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
       studentId: "",
     },
   });
+
+  // Update form value when role toggle changes
+  const handleRoleChange = (newRole: "student" | "admin") => {
+    setRegisterRole(newRole);
+    form.setValue("role", newRole);
+  };
 
   // Handle registration form submission
   const handleSubmit = async (values: RegisterFormValues) => {
@@ -74,6 +81,23 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Role toggle */}
+          <div className="flex flex-col space-y-2">
+            <FormLabel>I am a:</FormLabel>
+            <div className="flex justify-between items-center p-2 rounded-md border bg-gray-50">
+              <span className={`text-sm font-medium ${registerRole === "student" ? "text-primary" : "text-gray-500"}`}>
+                Student
+              </span>
+              <Switch 
+                checked={registerRole === "admin"}
+                onCheckedChange={(checked) => handleRoleChange(checked ? "admin" : "student")}
+              />
+              <span className={`text-sm font-medium ${registerRole === "admin" ? "text-primary" : "text-gray-500"}`}>
+                Admin
+              </span>
+            </div>
+          </div>
+
           <FormField
             control={form.control}
             name="name"
@@ -94,6 +118,7 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
               </FormItem>
             )}
           />
+          
           <FormField
             control={form.control}
             name="email"
@@ -110,6 +135,7 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
               </FormItem>
             )}
           />
+          
           <FormField
             control={form.control}
             name="password"
@@ -126,37 +152,8 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Account Type</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-1"
-                  >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="student" />
-                      </FormControl>
-                      <FormLabel className="font-normal">Student</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="admin" />
-                      </FormControl>
-                      <FormLabel className="font-normal">Admin</FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {form.watch("role") === "student" && (
+          
+          {registerRole === "student" && (
             <FormField
               control={form.control}
               name="studentId"
@@ -175,6 +172,7 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
             />
           )}
         </CardContent>
+        
         <CardFooter className="flex flex-col space-y-3">
           <Button
             type="submit"
@@ -183,6 +181,7 @@ const RegisterForm = ({ onBackToLogin }: RegisterFormProps) => {
           >
             {isLoading ? "Creating Account..." : "Sign Up"}
           </Button>
+          
           <Button
             type="button"
             variant="ghost"

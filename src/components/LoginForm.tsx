@@ -16,11 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
 
 // Login form schema
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  role: z.enum(["student", "admin"]).default("student"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -31,20 +34,28 @@ interface LoginFormProps {
 
 const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
   const { login, isLoading } = useLibrary();
-  
+  const [loginRole, setLoginRole] = useState<"student" | "admin">("student");
+
   // Login form
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
+      role: "student",
     },
   });
+
+  // Update form value when role toggle changes
+  const handleRoleChange = (newRole: "student" | "admin") => {
+    setLoginRole(newRole);
+    form.setValue("role", newRole);
+  };
 
   // Handle login form submission
   const handleSubmit = async (values: LoginFormValues) => {
     try {
-      await login(values.email, values.password);
+      await login(values.email, values.password, values.role);
     } catch (error) {
       // Error is handled in the login function
       console.error("Login error:", error);
@@ -60,7 +71,25 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
             Enter your credentials to access your dashboard.
           </CardDescription>
         </CardHeader>
+        
         <CardContent className="space-y-4">
+          {/* Role toggle */}
+          <div className="flex flex-col space-y-2">
+            <FormLabel>I am a:</FormLabel>
+            <div className="flex justify-between items-center p-2 rounded-md border bg-gray-50">
+              <span className={`text-sm font-medium ${loginRole === "student" ? "text-primary" : "text-gray-500"}`}>
+                Student
+              </span>
+              <Switch 
+                checked={loginRole === "admin"}
+                onCheckedChange={(checked) => handleRoleChange(checked ? "admin" : "student")}
+              />
+              <span className={`text-sm font-medium ${loginRole === "admin" ? "text-primary" : "text-gray-500"}`}>
+                Admin
+              </span>
+            </div>
+          </div>
+          
           <FormField
             control={form.control}
             name="email"
@@ -77,6 +106,7 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
               </FormItem>
             )}
           />
+          
           <FormField
             control={form.control}
             name="password"
@@ -102,6 +132,7 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
             )}
           />
         </CardContent>
+        
         <CardFooter className="flex flex-col space-y-3">
           <Button
             type="submit"
@@ -110,6 +141,7 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
+          
           <Button
             type="button"
             variant="ghost"
