@@ -124,7 +124,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
   
   // Set up auth state listener
   useEffect(() => {
-    // First set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setIsLoading(true);
@@ -159,10 +158,8 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       }
     );
     
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        // We'll use the onAuthStateChange handler to set the user
       } else {
         setIsLoading(false);
       }
@@ -184,7 +181,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         
         if (data && data.length > 0) {
-          // Transform Supabase data to match our Book interface
           const formattedBooks: Book[] = data.map(book => ({
             id: book.id,
             title: book.title,
@@ -227,7 +223,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         
         if (data) {
-          // Transform Supabase data to match our IssuedBook interface
           const formattedIssuedBooks: IssuedBook[] = data.map(issue => ({
             id: issue.id,
             bookId: issue.book_id,
@@ -329,24 +324,20 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      // Find the book
       const book = books.find((b) => b.id === bookId);
       if (!book) {
         toast.error("Book not found");
         return;
       }
       
-      // Check if book is available
       if (book.available <= 0) {
         toast.error("This book is currently unavailable");
         return;
       }
       
-      // Due date is 30 days from now
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 30);
       
-      // Insert into issued_books
       const { data, error } = await supabase
         .from('issued_books')
         .insert({
@@ -358,7 +349,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Update book availability
       const { error: updateError } = await supabase
         .from('books')
         .update({ available: book.available - 1 })
@@ -366,7 +356,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       
       if (updateError) throw updateError;
       
-      // Update local state
       const updatedBooks = books.map((b) => {
         if (b.id === bookId) {
           return { ...b, available: b.available - 1 };
@@ -404,7 +393,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update issued_book with return date
       const { error } = await supabase
         .from('issued_books')
         .update({
@@ -414,7 +402,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Update book availability
       const { error: updateError } = await supabase
         .from('books')
         .update({
@@ -424,7 +411,6 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       
       if (updateError) throw updateError;
       
-      // Update local state
       const updatedBooks = books.map((b) => {
         if (b.id === issue.bookId) {
           return { ...b, available: b.available + 1 };

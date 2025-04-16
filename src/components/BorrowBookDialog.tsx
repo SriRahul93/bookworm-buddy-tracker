@@ -24,6 +24,7 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BorrowBookDialogProps {
   book: Book;
@@ -44,6 +45,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
   const { user, borrowBook } = useLibrary();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [studentVerified, setStudentVerified] = useState(false);
   
   // Form definition
   const form = useForm<FormValues>({
@@ -55,6 +57,32 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
     },
   });
   
+  // Verify student details against database
+  const verifyStudent = async (values: FormValues): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Check if student exists with given roll number in the profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('student_id', values.rollNo)
+        .eq('role', 'student')
+        .single();
+      
+      if (error || !data) {
+        toast.error("Student not found with this roll number");
+        return false;
+      }
+      
+      // Student found
+      return true;
+    } catch (error) {
+      console.error("Error verifying student:", error);
+      return false;
+    }
+  };
+  
   const onSubmit = async (values: FormValues) => {
     if (!user) {
       toast.error("You need to login first!");
@@ -64,6 +92,17 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
     setIsSubmitting(true);
     
     try {
+      // Verify student details
+      const isStudentVerified = await verifyStudent(values);
+      
+      if (!isStudentVerified) {
+        toast.error("Failed to verify student details. Please check your roll number.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      setStudentVerified(true);
+      
       // Call the borrowBook function from LibraryContext
       await borrowBook(book.id);
       
@@ -81,6 +120,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
     if (showConfirmation) {
       // Reset the dialog state
       setShowConfirmation(false);
+      setStudentVerified(false);
       form.reset();
     }
     onOpenChange(false);
@@ -152,7 +192,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Processing..." : "Submit"}
+                    {isSubmitting ? "Verifying..." : "Submit"}
                   </Button>
                 </DialogFooter>
               </form>

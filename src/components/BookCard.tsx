@@ -22,10 +22,6 @@ const BookCard = ({ book }: BookCardProps) => {
   const borrowed = issuedBooks.some(issue => issue.bookId === book.id);
   
   const handleBorrowClick = () => {
-    if (!user) {
-      return;
-    }
-    
     setShowBorrowDialog(true);
   };
   
