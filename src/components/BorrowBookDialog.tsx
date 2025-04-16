@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 
 interface BorrowBookDialogProps {
   book: Book;
@@ -46,6 +47,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [studentVerified, setStudentVerified] = useState(false);
+  const [showVerificationFailure, setShowVerificationFailure] = useState(false);
   
   // Form definition
   const form = useForm<FormValues>({
@@ -71,7 +73,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
         .single();
       
       if (error || !data) {
-        toast.error("Student not found with this roll number");
+        console.error("Student verification error:", error);
         return false;
       }
       
@@ -96,7 +98,7 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
       const isStudentVerified = await verifyStudent(values);
       
       if (!isStudentVerified) {
-        toast.error("Failed to verify student details. Please check your roll number.");
+        setShowVerificationFailure(true);
         setIsSubmitting(false);
         return;
       }
@@ -108,6 +110,19 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
       
       // Show confirmation
       setShowConfirmation(true);
+      
+      // Update the database with student details
+      await supabase.from('issued_books')
+        .update({
+          student_details: {
+            department: values.department,
+            course: values.course,
+            rollNo: values.rollNo
+          }
+        })
+        .eq('book_id', book.id)
+        .eq('user_id', user.id);
+      
     } catch (error) {
       console.error("Error borrowing book:", error);
       toast.error("Failed to borrow book. Please try again.");
@@ -126,101 +141,121 @@ const BorrowBookDialog = ({ book, open, onOpenChange }: BorrowBookDialogProps) =
     onOpenChange(false);
   };
   
+  const handleVerificationFailureClose = () => {
+    setShowVerificationFailure(false);
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        {!showConfirmation ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Borrow Book</DialogTitle>
-              <DialogDescription>
-                Please enter your department, course, and roll number to borrow "{book.title}".
-              </DialogDescription>
-            </DialogHeader>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                <FormField
-                  control={form.control}
-                  name="department"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Department</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Computer Science" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="course"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Course</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Web Development" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="rollNo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Roll Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. CS2023-021" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter className="pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleClose} 
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Verifying..." : "Submit"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle className="text-green-600">Success!</DialogTitle>
-            </DialogHeader>
-            <div className="py-6 text-center">
-              <div className="mb-4 mx-auto bg-green-100 rounded-full w-16 h-16 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+    <>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-[425px]">
+          {!showConfirmation ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Borrow Book</DialogTitle>
+                <DialogDescription>
+                  Please enter your department, course, and roll number to borrow "{book.title}".
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                  <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Computer Science" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="course"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Course</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Web Development" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="rollNo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Roll Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. CS2023-021" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter className="pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleClose} 
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Verifying..." : "Submit"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-green-600">Success!</DialogTitle>
+              </DialogHeader>
+              <div className="py-6 text-center">
+                <div className="mb-4 mx-auto bg-green-100 rounded-full w-16 h-16 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Congratulations {user?.name}!
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  You can collect the physical copy of "{book.title}" from the library tomorrow.
+                </p>
+                <Button onClick={handleClose} className="w-full">Done</Button>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Congratulations {user?.name}!
-              </h3>
-              <p className="text-gray-600 mb-6">
-                You can collect the physical copy of "{book.title}" from the library tomorrow.
-              </p>
-              <Button onClick={handleClose} className="w-full">Done</Button>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      <AlertDialog open={showVerificationFailure} onOpenChange={handleVerificationFailureClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Verification Failed</AlertDialogTitle>
+            <AlertDialogDescription>
+              We couldn't verify your student details. Please check your roll number and try again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleVerificationFailureClose}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

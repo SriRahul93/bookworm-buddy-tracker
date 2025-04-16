@@ -145,6 +145,7 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90"
+            disabled={buttonIsLoading}
           >
             {buttonIsLoading ? "Signing in..." : "Sign In"}
           </Button>
@@ -154,6 +155,7 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
             variant="ghost"
             className="w-full"
             onClick={onCreateAccount}
+            disabled={buttonIsLoading}
           >
             Create an account
             <ArrowRight className="ml-2 h-4 w-4" />
