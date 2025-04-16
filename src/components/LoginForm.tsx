@@ -155,7 +155,7 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
             variant="ghost"
             className="w-full"
             onClick={onCreateAccount}
-            disabled={buttonIsLoading}
+            disabled={false}
           >
             Create an account
             <ArrowRight className="ml-2 h-4 w-4" />
