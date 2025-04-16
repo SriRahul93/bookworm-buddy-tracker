@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
 
 // Login form schema
@@ -55,7 +54,9 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
   // Handle login form submission
   const handleSubmit = async (values: LoginFormValues) => {
     try {
-      await login(values.email, values.password, values.role);
+      // The error is here: login() is called with 3 arguments but expects only 2
+      // Checking the LibraryContext, we need to modify this to match the login function signature
+      await login(values.email, values.password);
     } catch (error) {
       // Error is handled in the login function
       console.error("Login error:", error);
