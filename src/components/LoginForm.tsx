@@ -34,6 +34,8 @@ interface LoginFormProps {
 const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
   const { login, isLoading } = useLibrary();
   const [loginRole, setLoginRole] = useState<"student" | "admin">("student");
+  // Add state to track form submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Login form
   const form = useForm<LoginFormValues>({
@@ -54,14 +56,20 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
   // Handle login form submission
   const handleSubmit = async (values: LoginFormValues) => {
     try {
-      // The error is here: login() is called with 3 arguments but expects only 2
-      // Checking the LibraryContext, we need to modify this to match the login function signature
+      // Set local submitting state
+      setIsSubmitting(true);
       await login(values.email, values.password);
     } catch (error) {
       // Error is handled in the login function
       console.error("Login error:", error);
+    } finally {
+      // Reset submitting state in case login fails
+      setIsSubmitting(false);
     }
   };
+
+  // Use our local submitting state or the global loading state
+  const buttonIsLoading = isSubmitting || isLoading;
 
   return (
     <Form {...form}>
@@ -138,9 +146,9 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90"
-            disabled={isLoading}
+            disabled={buttonIsLoading}
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {buttonIsLoading ? "Signing in..." : "Sign In"}
           </Button>
           
           <Button
@@ -148,7 +156,8 @@ const LoginForm = ({ onCreateAccount }: LoginFormProps) => {
             variant="ghost"
             className="w-full"
             onClick={onCreateAccount}
-            disabled={isLoading}
+            // Make sure this button is not disabled while submitting
+            disabled={false}
           >
             Create an account
             <ArrowRight className="ml-2 h-4 w-4" />
